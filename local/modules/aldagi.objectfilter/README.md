@@ -1,7 +1,7 @@
 <!-- last-synced: 2026-10-15, commit: 301d031 -->
 # aldagi.objectfilter
 
-Contact list filter lookup "ობიექტი" (SPA 130): searches objects by any field and keeps the contacts that own them. Also exposes every SPA 130 field as a separate filter field ("ობიექტი: ...").
+Contact list filter lookups "ობიექტი" (SPA 130), "დილი" (deals) and "კალკულაცია" (SPA 1040/1054/1080): each searches its items by any field and keeps the linked contacts; combined lookups are chained through the object. Also exposes every SPA 130 field as a separate filter field ("ობიექტი: ...").
 
 ## Dependencies
 - Bitrix24 box: `main`, `crm`, `ui`, `iblock` (tested: main 26.600.0, crm 26.500.100)
@@ -25,6 +25,8 @@ Contact list filter lookup "ობიექტი" (SPA 130): searches objects b
 - Searches filled fields only; multiple UFs are not part of the text search
 - `iblock_element` fields: ≤1000 matching elements per field
 - Subtitle fields are hardcoded (`ObjectSearch::SUBTITLE_FIELDS`)
+- Deals: searched through the standard full-text index only (title, ID, client, stage...); deal UFs need `IS_SEARCHABLE=Y` + index rebuild; words <3 characters are ignored
+- Calculation fields whose label contains json/table/bug are not searched
 
 ## Docs
 [../../../docs/](../../../docs/) — PRD, SPEC, PLAN, ARCHITECTURE, DECISIONS

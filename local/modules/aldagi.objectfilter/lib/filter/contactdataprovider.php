@@ -2,40 +2,27 @@
 
 namespace Aldagi\ObjectFilter\Filter;
 
-use Aldagi\ObjectFilter\ObjectSearch;
 use Bitrix\Crm;
 
 /**
- * Contact filter data provider extended with the "ობიექტი" lookup and fields of the linked objects.
+ * Contact filter data provider extended with the "ობიექტი", "დილი", "კალკულაცია" lookups
+ * and fields of the linked objects.
  */
 class ContactDataProvider extends Crm\Filter\ContactDataProvider
 {
-	private ?ObjectFilterFields $objectFields = null;
+	private ?ContactLookupFilter $lookupFilter = null;
 
 	public function prepareFields()
 	{
-		$fields = parent::prepareFields();
-		$objectFields = $this->getObjectFields();
-		if ($objectFields)
-		{
-			$lookupFieldId = ObjectFilterFields::getLookupFieldId();
-			$fields[$lookupFieldId] = $objectFields->createLookupField($fields[$lookupFieldId] ?? null);
-			$fields += $objectFields->prepareFields();
-		}
-
-		return $fields;
+		return $this->getLookupFilter()->extendFields(parent::prepareFields());
 	}
 
 	public function prepareFieldData($fieldID)
 	{
-		$objectFields = $this->getObjectFields();
-		if ($objectFields && $fieldID === ObjectFilterFields::getLookupFieldId())
+		$lookupFilter = $this->getLookupFilter();
+		if ($lookupFilter->isOwnFieldId((string)$fieldID))
 		{
-			return $objectFields->getLookupFieldData();
-		}
-		if ($objectFields && ObjectFilterFields::isOwnFieldId((string)$fieldID))
-		{
-			return $objectFields->prepareFieldData((string)$fieldID);
+			return $lookupFilter->prepareFieldData((string)$fieldID);
 		}
 
 		return parent::prepareFieldData($fieldID);
@@ -43,7 +30,7 @@ class ContactDataProvider extends Crm\Filter\ContactDataProvider
 
 	/**
 	 * Called by the contact list (and other consumers of the contact filter) right after
-	 * the raw UI filter is read, so it is the place to turn object conditions into an ID condition.
+	 * the raw UI filter is read, so it is the place to turn lookup conditions into an ID condition.
 	 */
 	public function applyActivityFastSearchFilter(int $entityTypeId, array &$filterFields): void
 	{
@@ -51,17 +38,12 @@ class ContactDataProvider extends Crm\Filter\ContactDataProvider
 
 		if ($entityTypeId === \CCrmOwnerType::Contact)
 		{
-			$this->getObjectFields()?->applyToContactFilter($filterFields);
+			$this->getLookupFilter()->applyToContactFilter($filterFields);
 		}
 	}
 
-	private function getObjectFields(): ?ObjectFilterFields
+	private function getLookupFilter(): ContactLookupFilter
 	{
-		if ($this->objectFields === null && ObjectSearch::isAvailable())
-		{
-			$this->objectFields = new ObjectFilterFields($this, new ObjectSearch());
-		}
-
-		return $this->objectFields;
+		return $this->lookupFilter ??= new ContactLookupFilter($this);
 	}
 }

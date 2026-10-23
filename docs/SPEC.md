@@ -25,7 +25,8 @@ Filter values (`b_user_option`, `main.ui.filter` / `CRM_CONTACT_LIST_V12`):
 |---|---|---|---|---|---|
 | L-1 | Contact list filter build | `filterId` starts with `CRM_CONTACT_LIST` | `PARENT_ID_130` replaced by multiple `entity_selector` (`aldagi-object`); `OBJ130_*` fields added | AC-1..5 | custom: D-1, D-2 |
 | L-2 | Lookup search (`ui.entityselector.doSearch`) | non-empty text | item `search:<text>` + ≤50 newest matches, permission-filtered | AC-1, AC-2, AC-8 | custom: D-3 |
-| L-3 | `ContactDataProvider::applyActivityFastSearchFilter` | `PARENT_ID_130` or `OBJ130_*` present | one ORM filter on the object: picked IDs OR, each text AND, `OBJ130_*` AND → contact IDs → `@ID` | AC-1..6 | custom: D-1, D-4 |
+| L-3 | `ContactDataProvider::applyActivityFastSearchFilter` | `PARENT_ID_130` or `OBJ130_*` present | one ORM filter on the object: picked IDs OR; text chips grouped by primary match field (same field OR, groups AND); `OBJ130_*` AND → contact IDs → `@ID` | AC-1..6 | custom: D-1, D-5 |
+| L-7 | Lookup dropdown render | always | `searchTabOptions.itemOrder = {sort: 'asc nulls last'}`; text item sort 0, id lowercased → always first, no duplicates | AC-1 | custom: D-3 |
 | L-4 | same | zero matches | `@ID = [0]` | AC-6 | custom: D-4 |
 | L-5 | Object ID query | always | `UserPermissions::itemsList()->applyAvailableItemsGetListParameters`, READ | AC-7 | standard: CRM permissions API |
 | L-6 | `OBJ130_*` conversion | always | `ItemDataProvider::prepareListFilter`, `processStageSemanticFilter`, `ItemUfDataProvider::prepareListFilter`, `UserBasedField`, `DateTimeField::applyTimezoneOffset` — same as `crm.item.list` | AC-5 | standard: SPA filter providers |
@@ -94,9 +95,44 @@ Automated tests: required (user answer), not written yet — see PLAN M4. Manual
 | AC-7 | `ObjectSearch::getReadableObjectIds` | — |
 | AC-8 | `ObjectProvider::doSearch`, `dynamicSearchMatchMode` | manual AC-8 |
 
+## Phase 2 — "დილი" and "კალკულაცია" lookups in the contact filter (implemented 2026-10-23, see D-6..D-8)
+
+### Data (verified on testmycrm, 2026-10-23)
+| Link | Storage | Rows |
+|---|---|---|
+| deal ↔ contact | `b_crm_deal_contact` | 153 988 (153 355 deals) |
+| deal → object (parent) | `b_crm_entity_relation` 2→130 | 36 411 |
+| object → calculation (parent) | `b_crm_entity_relation` 130→1040 / 130→1054 / 130→1080 | 25 176 / 921 / 82 |
+| calculation ↔ contact directly | `b_crm_entity_contact`, `CONTACT_ID` | 0 — only through the object |
+
+| Entity | Table | Search index |
+|---|---|---|
+| Deal (2), 53 UF (25 string, 12 enum, 5 iblock) | `b_crm_deal` + `b_uts_crm_deal` | standard `SEARCH_CONTENT` + FULLTEXT `IX_B_CRM_DEAL_SEARCH` (0.03 s); no UF has `IS_SEARCHABLE=Y` |
+| Calculations 1040 / 1054 / 1080 (22 / 19 / 16 UF) | `b_crm_dynamic_items_<id>` | none; LIKE like objects |
+
+Measured: LIKE on deals (TITLE + 1 UF through UTS join) = 5.4 s → LIKE over all deal fields is not acceptable.
+
+### Standard-first check
+| Requirement | Standard feature checked | Covers it? | Approach |
+|---|---|---|---|
+| Find deals by text fast | deal `SEARCH_CONTENT` full-text (same as deal list search box) | partial — fast, but includes UFs only when `IS_SEARCHABLE=Y` (0 today) | **standard**: use `SearchEnvironment` full-text + mark needed deal UFs searchable (config) + rebuild index |
+| Deal lookup in contact filter | contact filter fields | no — no deal fields | custom lookup `ALDAGI_DEAL`, D-6 |
+| Calculation lookup in contact filter | contact filter `PARENT_ID_*` fields | no — calculation is a child of the object, not a parent of the contact | custom lookup `ALDAGI_CALCULATION`, D-6 |
+
+### Planned logic
+| # | Trigger | Action | AC |
+|---|---|---|---|
+| L-8 | contact filter build | add `ALDAGI_DEAL`, `ALDAGI_CALCULATION` (`entity_selector`, multiple, same dialog options as `PARENT_ID_130`) | AC-11, AC-12 |
+| L-9 | `aldagi-deal` search | full-text `SEARCH_CONTENT` via `SearchEnvironment`, permission-filtered; item `search:<text>` on top | AC-11 |
+| L-10 | `aldagi-calculation` search | LIKE over title + scalar UFs of 1040/1054/1080, JSON/table fields excluded; items labelled by calculation type | AC-12 |
+| L-11 | contact filter apply (`ContactLookupFilter`) | chained through the object (D-7): object set ∩ calculation parents ∩ deal children → `b_crm_entity_contact`; deal alone → `b_crm_deal_contact` | AC-11..13 |
+| L-12 | text search | `%=` LIKE (D-8); deal full-text needs a word of ≥3 chars, else no match | AC-1, AC-11, AC-12 |
+
 ## Open questions
 1. Automated test runner: PHPUnit needs a CLI, and there is no SSH. Proposal: assertion-based self-test script run through the admin PHP console — to confirm.
 2. Restricted test user for AC-7.
 3. Server log location.
 4. Subtitle fields are hardcoded for vehicles/property — do other object types (agro, cargo) need different ones?
 5. Does prod (mycrm) already have `init.php` or `/local` code?
+6. Calculation SPAs: all three (1040, 1054, 1080) assumed — confirm.
+7. Which deal attributes must be searchable (→ which deal UFs get `IS_SEARCHABLE=Y`)?

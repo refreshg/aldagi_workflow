@@ -2,19 +2,17 @@
 
 namespace Aldagi\ObjectFilter\Filter;
 
-use Aldagi\ObjectFilter\EntitySelector\ObjectProvider;
-use Aldagi\ObjectFilter\ObjectSearch;
+use Aldagi\ObjectFilter\Search\ObjectSearch;
 use Bitrix\Crm;
 use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Main\Filter\DataProvider;
 use Bitrix\Main\Filter\Field;
-use Bitrix\Main\Web\Json;
 
 /**
  * Contact filter fields built on the "ობიექტი" smart process (SPA 130):
  * - the "ობიექტი" lookup, searching objects by any of their fields;
  * - every object field as a separate "ობიექტი: ..." filter field.
- * Both are converted into a filter by IDs of the bound contacts.
+ * Both narrow down the same object; ContactLookupFilter turns the objects into contacts.
  */
 class ObjectFilterFields
 {
@@ -72,39 +70,17 @@ class ObjectFilterFields
 
 	public function createLookupField(?Field $standardField): Field
 	{
-		return new Field(
+		return LookupHelper::createField(
 			$this->ownerProvider,
 			self::getLookupFieldId(),
-			[
-				'name' => self::LOOKUP_TITLE,
-				'type' => 'entity_selector',
-				'default' => $standardField?->isDefault() ?? false,
-				'partial' => true,
-			]
+			self::LOOKUP_TITLE,
+			$standardField?->isDefault() ?? false
 		);
 	}
 
 	public function getLookupFieldData(): array
 	{
-		return [
-			'params' => [
-				'multiple' => 'Y',
-				'dialogOptions' => [
-					'height' => 350,
-					'context' => 'ALDAGI_CONTACT_FILTER_OBJECT',
-					'entities' => [
-						[
-							'id' => ObjectProvider::ENTITY_ID,
-							'dynamicLoad' => true,
-							'dynamicSearch' => true,
-							// show every object the server matched, even when the match is not in the title
-							'dynamicSearchMatchMode' => 'all',
-						],
-					],
-					'dropdownMode' => false,
-				],
-			],
-		];
+		return LookupHelper::getFieldData($this->search->getSelectorEntityId(), 'ALDAGI_CONTACT_FILTER_OBJECT');
 	}
 
 	/**
@@ -142,99 +118,31 @@ class ObjectFilterFields
 	}
 
 	/**
-	 * Removes object conditions from the contact filter and replaces them with '@ID' => [contact ids].
-	 * All conditions narrow down the same object: "honda" + "სედანი" keeps owners of a Honda sedan.
+	 * Removes the "ობიექტი" lookup and "ობიექტი: ..." fields from the contact filter.
+	 * Returns readable objects matching all of them, or null when none was set.
+	 *
+	 * @return int[]|null
 	 */
-	public function applyToContactFilter(array &$contactFilter): void
+	public function extractObjectIds(array &$contactFilter): ?array
 	{
+		$fieldName = self::getLookupFieldId();
+		$lookupValues = LookupHelper::extractValues(
+			$contactFilter,
+			$fieldName,
+			// legacy saved values look like "CRMDYNAMIC-130_<id>"
+			fn($value) => (int)ParentFieldManager::transformEncodedFilterValueIntoInteger($fieldName, $value)
+		);
+
 		$itemFilter = array_merge(
-			$this->extractLookupFilter($contactFilter),
+			$lookupValues !== null ? $this->search->buildLookupFilter(...$lookupValues) : [],
 			$this->extractObjectFieldsFilter($contactFilter)
 		);
 		if (empty($itemFilter))
 		{
-			return;
+			return null;
 		}
 
-		$this->restrictContactIds(
-			$contactFilter,
-			$this->getContactIds($this->search->getReadableObjectIds($itemFilter))
-		);
-	}
-
-	/**
-	 * Picked objects are alternatives (OR), every text chip is one more condition (AND).
-	 */
-	private function extractLookupFilter(array &$contactFilter): array
-	{
-		$fieldName = self::getLookupFieldId();
-		$value = $contactFilter[$fieldName] ?? null;
-		if ($value === null || $value === '' || $value === [] || $value === false)
-		{
-			return [];
-		}
-
-		$objectIds = [];
-		$texts = [];
-		foreach ((array)$value as $singleValue)
-		{
-			$singleValue = $this->normalizeLookupValue($singleValue);
-			if (is_string($singleValue) && str_starts_with($singleValue, ObjectSearch::TEXT_VALUE_PREFIX))
-			{
-				$text = trim(mb_substr($singleValue, mb_strlen(ObjectSearch::TEXT_VALUE_PREFIX)));
-				if ($text !== '')
-				{
-					$texts[] = $text;
-				}
-				continue;
-			}
-
-			$objectId = (int)ParentFieldManager::transformEncodedFilterValueIntoInteger($fieldName, $singleValue);
-			if ($objectId > 0)
-			{
-				$objectIds[] = $objectId;
-			}
-		}
-		if (empty($objectIds) && empty($texts))
-		{
-			return [];
-		}
-		unset($contactFilter[$fieldName], $contactFilter[$fieldName . '_label']);
-
-		$filter = [];
-		if (!empty($objectIds))
-		{
-			$filter['@ID'] = $objectIds;
-		}
-		foreach (array_unique($texts) as $text)
-		{
-			$filter[] = $this->search->buildTextFilter($text);
-		}
-
-		return $filter;
-	}
-
-	/**
-	 * Entity selector values may come as an ID or as a JSON pair [entityId, id].
-	 */
-	private function normalizeLookupValue(mixed $value): mixed
-	{
-		if (is_string($value) && str_starts_with($value, '['))
-		{
-			try
-			{
-				$decoded = Json::decode($value);
-				if (is_array($decoded) && isset($decoded[1]))
-				{
-					return $decoded[1];
-				}
-			}
-			catch (\Throwable)
-			{
-			}
-		}
-
-		return $value;
+		return $this->search->getReadableIds($itemFilter);
 	}
 
 	private function extractObjectFieldsFilter(array &$contactFilter): array
@@ -250,22 +158,6 @@ class ObjectFilterFields
 		}
 
 		return $this->prepareItemFilter($requestFilter);
-	}
-
-	private function getContactIds(array $objectIds): array
-	{
-		return !empty($objectIds) ? $this->search->getContactIds($objectIds) : [];
-	}
-
-	private function restrictContactIds(array &$contactFilter, array $contactIds): void
-	{
-		if (isset($contactFilter['@ID']))
-		{
-			$contactIds = array_values(array_intersect($contactIds, array_map('intval', (array)$contactFilter['@ID'])));
-		}
-
-		// [0] keeps the condition valid and returns nothing when no object matched
-		$contactFilter['@ID'] = !empty($contactIds) ? $contactIds : [0];
 	}
 
 	/**
