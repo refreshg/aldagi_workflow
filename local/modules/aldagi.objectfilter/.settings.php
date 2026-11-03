@@ -19,6 +19,13 @@ return [
 					],
 				],
 				[
+					'entityId' => 'aldagi-car-model',
+					'provider' => [
+						'moduleId' => 'aldagi.objectfilter',
+						'className' => '\\Aldagi\\ObjectFilter\\EntitySelector\\CarModelProvider',
+					],
+				],
+				[
 					'entityId' => 'aldagi-calculation',
 					'provider' => [
 						'moduleId' => 'aldagi.objectfilter',

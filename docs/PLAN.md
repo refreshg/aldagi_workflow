@@ -53,6 +53,17 @@
 - [x] Manual checks: regression AC-1..6 unchanged; deal "ტყეშელაშვილი" 135, deal 173001 → 1, calc "kia" 324, kia optima + "5 წელზე მეტი" 32 (= SQL), deal + object 3; selector AJAX for all three
 - [ ] User check in the browser; self-test script (M4)
 
+## M11 — Number filters for numeric list fields (approved 2026-11-03)
+- [x] `lib/filter/numericlistfields.php`, wired in `objectfilterfields.php` — D-9
+- [x] Checks: toyota + year>2000 + engine>2.0 = 1258 (= SQL); range / less / exact / "4.3 +" / no match; list page rows verified
+
+## M12 — Vehicle fields, formats, model by make (approved 2026-11-03)
+- [x] 27 vehicle fields only, card order — `objectfilterfields.php` (`CAR_FIELDS`), D-10
+- [x] Enumerations as drop-down lists; numbers/dates/text/checkbox native
+- [x] `CarModelProvider` (`aldagi-car-model`) + page script `local/js/aldagi/objectfilter/carmodel`, loaded from `include.php` on `/crm/contact/`
+- [x] Server checks: Toyota 91 models, Toyota+BMW 180, search "camry" (BMW → 0), model filter = SQL
+- [ ] Browser check of the make → model drop-down (user)
+
 ## M4 — Verification and automated tests (needs approval)
 - [ ] Confirm test runner approach (SPEC open question 1)
 - [ ] Self-test script covering AC-1..6, AC-8 with fixed fixtures/expectations — `tests/objectfilter_selftest.php` (run through admin PHP console)
@@ -68,4 +79,4 @@
 - [ ] Smoke test AC-1..4 on prod
 
 ## Status
-M0–M3.1 and Phase 2 (M6–M10) done on testmycrm, pending user browser check; deal searchable fields, M4, M5 — Not started
+M0–M3.1, Phase 2 (M6–M10), M11 and M12 done on testmycrm, pending user browser check; deal searchable fields, M4, M5 — Not started

@@ -55,3 +55,17 @@
 - **Context:** ORM `%` builds `UPPER(col) LIKE '<PHP-uppercased value>'`; PHP turns Georgian into Mtavruli, MySQL does not → every Georgian search returned 0 (e.g. "5 წელზე მეტი": 0 vs 16 526; "თბილისი": 0 vs 415).
 - **Decision:** `FactorySearch` uses `%=` with `%text%` and escaped wildcards; Latin stays case-insensitive through the collation (toyota: 7562 both ways).
 - **Consequences:** applies to object and calculation search and iblock names. Standard Bitrix filters using `%` probably have the same Georgian issue (not ours to fix).
+
+### D-9: Number filters for numeric list fields of the object
+- **Date:** 2026-11-03 — confirmed by the user ("თუ კი გავაკეთოთ")
+- **Context:** "Toyota, newer than 2000, engine above 2.0". Release year and engine volume are enumeration fields; the standard filter only lets you tick list values — no more/less/range.
+- **Decision:** `NumericListFields` detects object enumeration fields with ≥3 values of which ≥90% parse as numbers (`გამოშვების წელი`, `ძრავის მოცულობა`, `ყველაზე ახალგაზრდა მძღოლის ასაკი`, `რემონტის... ლიმიტი USD`) and shows `OBJ130_<field>` as a `number` filter; the range is translated into the matching enum IDs (`@<field>`), on the same object as the lookup. "1990 - მდე" = just below 1990, "4.3 +" / "90 - ზე მეტი" = just above. No match → `@<field> = [-1]` (an empty field may be stored as 0).
+- **Alternatives rejected:** ticking every year/volume by hand; a duplicate range field next to the list field.
+- **Consequences:** verified: toyota + year>2000 + engine>2.0 = 1258 contacts, equal to SQL. New numeric-looking list fields become number filters automatically.
+
+### D-10: Vehicle fields only, uniform formats, model depends on make
+- **Date:** 2026-11-03 — confirmed by the user ("1) დამალე… 2) დიახ 3) გავაკეთოთ")
+- **Context:** ~130 "ობიექტი: …" filter fields cluttered the list; some list fields came as a search dialog, others as a drop-down; the model list had all 1404 models. The user manages only vehicles for now.
+- **Decision:** `ObjectFilterFields::CAR_FIELDS` — 27 vehicle fields in the order of the object card; other object fields are hidden. Formats: numbers → number filter, numeric lists → number (D-9), other enumerations → `list` drop-down, dates → date, text → text, booleans → checkbox. "ობიექტი: მოდელი" → entity-selector `aldagi-car-model` (`CarModelProvider`, model reference iblock 17, make via property `MARK` → iblock 16); the page script `local/js/aldagi/objectfilter/carmodel` (loaded on `/crm/contact/` pages) passes the makes currently chosen in "ობიექტი: მარკა" as the `makeIds` option and reloads the list when they change. No make chosen → search by model or make name.
+- **Alternatives rejected:** dependent drop-downs — the standard filter has no such feature; one tree field "make → models" — the user wants the two card fields.
+- **Consequences:** the script patches `BX.UI.EntitySelector.Dialog.prototype.show/getAjaxJson` for dialogs of `aldagi-car-model` only and uses `loadState` — re-check after `ui` module updates. Verified: Toyota → 91 models, Toyota+BMW → 180, "camry" with BMW → 0, model Camry → 1335 contacts (= SQL).

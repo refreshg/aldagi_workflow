@@ -14,7 +14,10 @@
 | `LookupSearch` / `FactorySearch` | `lib/search/` | lookup contract; text search (`%=`), chip grouping, permissions for one CRM type |
 | `ObjectSearch`, `DealSearch`, `CalculationTypeSearch`, `CalculationSearch` | `lib/search/` | per-entity links to contacts and dropdown display data; deals use full-text `SEARCH_CONTENT` |
 | `LookupProvider` + Object/Deal/Calculation providers | `lib/entityselector/` | entity-selectors `aldagi-object`, `aldagi-deal`, `aldagi-calculation` |
-| `.settings.php` | module root | registers the three providers in `ui.entity-selector` |
+| `NumericListFields` | `lib/filter/numericlistfields.php` | numeric list fields (year, engine...) as number filters (D-9) |
+| `CarModelProvider` | `lib/entityselector/carmodelprovider.php` | entity-selector `aldagi-car-model`: models of the chosen makes (D-10) |
+| car model page script | `local/js/aldagi/objectfilter/carmodel/` | passes chosen makes to the model dialog; loaded on `/crm/contact/` by `include.php` |
+| `.settings.php` | module root | registers the four providers in `ui.entity-selector` |
 
 ## Data flow
 ```mermaid

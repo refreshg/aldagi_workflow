@@ -126,6 +126,8 @@ Measured: LIKE on deals (TITLE + 1 UF through UTS join) = 5.4 s → LIKE over al
 | L-9 | `aldagi-deal` search | full-text `SEARCH_CONTENT` via `SearchEnvironment`, permission-filtered; item `search:<text>` on top | AC-11 |
 | L-10 | `aldagi-calculation` search | LIKE over title + scalar UFs of 1040/1054/1080, JSON/table fields excluded; items labelled by calculation type | AC-12 |
 | L-11 | contact filter apply (`ContactLookupFilter`) | chained through the object (D-7): object set ∩ calculation parents ∩ deal children → `b_crm_entity_contact`; deal alone → `b_crm_deal_contact` | AC-11..13 |
+| L-14 | contact filter build | only the 27 vehicle fields (`CAR_FIELDS`); enumerations as `list`; model as `aldagi-car-model` selector limited to makes chosen in the make field (page script) (D-10) | AC-5 |
+| L-13 | `OBJ130_<numeric list field>` | number filter (exact/range/more/less) → matching enum IDs `@<field>`, same object as the lookup (D-9) | AC-14 |
 | L-12 | text search | `%=` LIKE (D-8); deal full-text needs a word of ≥3 chars, else no match | AC-1, AC-11, AC-12 |
 
 ## Open questions
