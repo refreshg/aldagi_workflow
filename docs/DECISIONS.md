@@ -69,3 +69,9 @@
 - **Decision:** `ObjectFilterFields::CAR_FIELDS` — 27 vehicle fields in the order of the object card; other object fields are hidden. Formats: numbers → number filter, numeric lists → number (D-9), other enumerations → `list` drop-down, dates → date, text → text, booleans → checkbox. "ობიექტი: მოდელი" → entity-selector `aldagi-car-model` (`CarModelProvider`, model reference iblock 17, make via property `MARK` → iblock 16); the page script `local/js/aldagi/objectfilter/carmodel` (loaded on `/crm/contact/` pages) passes the makes currently chosen in "ობიექტი: მარკა" as the `makeIds` option and reloads the list when they change. No make chosen → search by model or make name.
 - **Alternatives rejected:** dependent drop-downs — the standard filter has no such feature; one tree field "make → models" — the user wants the two card fields.
 - **Consequences:** the script patches `BX.UI.EntitySelector.Dialog.prototype.show/getAjaxJson` for dialogs of `aldagi-car-model` only and uses `loadState` — re-check after `ui` module updates. Verified: Toyota → 91 models, Toyota+BMW → 180, "camry" with BMW → 0, model Camry → 1335 contacts (= SQL).
+
+### D-11: Per-portal switch for the lookups; production gets the vehicle fields only
+- **Date:** 2026-11-05 — requested by the user (prod: only "ავტომობილის 27 ველი … მოდელი მარკაზე დამოკიდებული")
+- **Context:** Same code must run on testmycrm (all features) and mycrm (vehicle fields only), without touching anything else on prod.
+- **Decision:** module option `aldagi.objectfilter` / `lookups` — comma list of `object,deal,calculation` (default all). With `object` off the standard "ობიექტი" (`PARENT_ID_130`) field and its values are left to Bitrix. Prod: `lookups = ''`; test: option absent (= all).
+- **Consequences:** prod contact filter = 41 standard fields unchanged + 27 "ობიექტი: …" vehicle fields. To enable a lookup on prod later: `Option::set('aldagi.objectfilter', 'lookups', 'object')`.

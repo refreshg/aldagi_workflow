@@ -5,6 +5,7 @@ namespace Aldagi\ObjectFilter\Filter;
 use Aldagi\ObjectFilter\Search\CalculationSearch;
 use Aldagi\ObjectFilter\Search\DealSearch;
 use Aldagi\ObjectFilter\Search\ObjectSearch;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Filter\DataProvider;
 use Bitrix\Main\Filter\Field;
 
@@ -20,10 +21,13 @@ class ContactLookupFilter
 	public const DEAL_FIELD_ID = 'ALDAGI_DEAL';
 	public const CALCULATION_FIELD_ID = 'ALDAGI_CALCULATION';
 
+	private const LOOKUPS_OPTION = 'lookups';
+	private const DEFAULT_LOOKUPS = 'object,deal,calculation';
 	private const DEAL_TITLE = 'დილი';
 	private const CALCULATION_TITLE = 'კალკულაცია';
 
 	private DataProvider $ownerProvider;
+	private bool $isObjectLookupEnabled;
 	private ?ObjectFilterFields $objectFields = null;
 	private ?DealSearch $dealSearch = null;
 	private ?CalculationSearch $calculationSearch = null;
@@ -31,18 +35,34 @@ class ContactLookupFilter
 	public function __construct(DataProvider $ownerProvider)
 	{
 		$this->ownerProvider = $ownerProvider;
+		$enabledLookups = self::getEnabledLookups();
+		$this->isObjectLookupEnabled = in_array('object', $enabledLookups, true);
 		if (ObjectSearch::isAvailable())
 		{
 			$this->objectFields = new ObjectFilterFields($ownerProvider, new ObjectSearch());
 		}
-		if (DealSearch::isAvailable())
+		if (in_array('deal', $enabledLookups, true) && DealSearch::isAvailable())
 		{
 			$this->dealSearch = new DealSearch();
 		}
-		if (CalculationSearch::isAvailable())
+		if (in_array('calculation', $enabledLookups, true) && CalculationSearch::isAvailable())
 		{
 			$this->calculationSearch = new CalculationSearch();
 		}
+	}
+
+	/**
+	 * Lookups switched on for this portal (module option "lookups", comma separated).
+	 * The vehicle "ობიექტი: ..." fields are always on; with "object" off the standard
+	 * "ობიექტი" field stays untouched.
+	 *
+	 * @return string[]
+	 */
+	private static function getEnabledLookups(): array
+	{
+		$value = Option::get('aldagi.objectfilter', self::LOOKUPS_OPTION, self::DEFAULT_LOOKUPS);
+
+		return array_values(array_filter(array_map('trim', explode(',', $value))));
 	}
 
 	/**
@@ -51,7 +71,7 @@ class ContactLookupFilter
 	 */
 	public function extendFields(array $fields): array
 	{
-		if ($this->objectFields)
+		if ($this->objectFields && $this->isObjectLookupEnabled)
 		{
 			$lookupFieldId = ObjectFilterFields::getLookupFieldId();
 			$fields[$lookupFieldId] = $this->objectFields->createLookupField($fields[$lookupFieldId] ?? null);
@@ -81,7 +101,7 @@ class ContactLookupFilter
 	 */
 	public function prepareFieldData(string $fieldId): ?array
 	{
-		if ($this->objectFields && $fieldId === ObjectFilterFields::getLookupFieldId())
+		if ($this->objectFields && $this->isObjectLookupEnabled && $fieldId === ObjectFilterFields::getLookupFieldId())
 		{
 			return $this->objectFields->getLookupFieldData();
 		}
@@ -106,7 +126,9 @@ class ContactLookupFilter
 
 	public function isOwnFieldId(string $fieldId): bool
 	{
-		return in_array($fieldId, [ObjectFilterFields::getLookupFieldId(), self::DEAL_FIELD_ID, self::CALCULATION_FIELD_ID], true)
+		return ($this->isObjectLookupEnabled && $fieldId === ObjectFilterFields::getLookupFieldId())
+			|| ($this->dealSearch && $fieldId === self::DEAL_FIELD_ID)
+			|| ($this->calculationSearch && $fieldId === self::CALCULATION_FIELD_ID)
 			|| ObjectFilterFields::isOwnFieldId($fieldId);
 	}
 
@@ -117,7 +139,7 @@ class ContactLookupFilter
 	{
 		$objectIdSets = [];
 
-		$objectIds = $this->objectFields?->extractObjectIds($contactFilter);
+		$objectIds = $this->objectFields?->extractObjectIds($contactFilter, $this->isObjectLookupEnabled);
 		if ($objectIds !== null)
 		{
 			$objectIdSets[] = $objectIds;

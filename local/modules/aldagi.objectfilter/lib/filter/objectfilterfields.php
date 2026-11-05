@@ -185,10 +185,11 @@ class ObjectFilterFields
 	 *
 	 * @return int[]|null
 	 */
-	public function extractObjectIds(array &$contactFilter): ?array
+	public function extractObjectIds(array &$contactFilter, bool $withLookup = true): ?array
 	{
 		$fieldName = self::getLookupFieldId();
-		$lookupValues = LookupHelper::extractValues(
+		// with the lookup switched off the standard "ობიექტი" field is left to Bitrix
+		$lookupValues = !$withLookup ? null : LookupHelper::extractValues(
 			$contactFilter,
 			$fieldName,
 			// legacy saved values look like "CRMDYNAMIC-130_<id>"

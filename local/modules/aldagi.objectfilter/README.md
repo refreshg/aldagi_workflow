@@ -9,14 +9,15 @@ Contact list filter lookups "ობიექტი" (SPA 130), "დილი" (d
 - SPA `entityTypeId=130` and its fields (constants in `ObjectSearch`)
 
 ## Install / upgrade
-1. Copy this folder to `/local/modules/aldagi.objectfilter/`
+1. Copy this folder to `/local/modules/aldagi.objectfilter/` and `local/js/aldagi/objectfilter/` to `/local/js/aldagi/objectfilter/`
 2. `php -l` every file (through the admin PHP console)
 3. Register once: Marketplace → Installed solutions, or in the console `(new aldagi_objectfilter())->DoInstall();`
 4. Add to `/local/php_interface/init.php` (merge, don't overwrite): `\Bitrix\Main\Loader::includeModule('aldagi.objectfilter');` — must run **before crm** loads
 5. Upgrade: replace files; no restart needed
 
 ## Configuration
-- No settings, groups or cron jobs
+- Module option `lookups` (comma list `object,deal,calculation`, default all): which lookups are on for this portal. Prod: empty (vehicle fields only). Set with `\Bitrix\Main\Config\Option::set('aldagi.objectfilter', 'lookups', '...')`
+- No groups or cron jobs
 - Permissions: standard CRM read access to SPA 130
 
 ## Known limitations

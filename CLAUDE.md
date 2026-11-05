@@ -5,7 +5,7 @@
 - Bitrix24 **box** (self-hosted) on Ubuntu; `main` 26.600.0, `crm` 26.500.100 (prod reported to be the same version)
 - PHP 8.3.33, MySQL
 - Test portal: `https://testmycrm.aldagi.ge` — docroot `/var/www/html/bx-site`, PHP user `www-data`
-- Prod portal: `https://mycrm.aldagi.ge`
+- Prod portal: `https://mycrm.aldagi.ge` — same docroot/versions; module live since 2026-11-05 with option `lookups = ""` (vehicle fields only, D-11)
 - No REST / webhooks / OAuth / business processes — code is a local PHP module
 
 ## Commands

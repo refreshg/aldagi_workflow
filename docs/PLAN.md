@@ -71,12 +71,12 @@
 - [ ] Lookup UI check in a browser: dropdown, chips saved/restored in presets
 - [ ] List load time with `search:toyota` (7628 objects)
 
-## M5 — Production rollout (needs approval + date)
-- [ ] Check prod (`mycrm.aldagi.ge`) versions of `main`, `crm`, `ui` and existing `/local`, `init.php`
-- [ ] Upload `local/modules/aldagi.objectfilter/`, `php -l`
-- [ ] `DoInstall()`
-- [ ] Add the line to `init.php` (merge, never overwrite)
-- [ ] Smoke test AC-1..4 on prod
+## M5 — Production rollout (done 2026-11-05: vehicle fields only, D-11)
+- [x] Check prod versions (main 26.600.0, crm 26.500.100, ui 26.500.0 — core files identical to test) and `/local`, `init.php` (none existed); 27/27 vehicle fields, iblocks 16/17, MARK property identical
+- [x] Option `lookups = ""` set first; upload `local/modules/aldagi.objectfilter/` + `local/js/aldagi/objectfilter/` (23 files), `php -l`
+- [x] `DoInstall()`; dry run in console: +27 fields, 0 changed/removed, TOYOTA+year>2000+engine>2.0 = 1309 = SQL
+- [x] `/local/php_interface/init.php` created (did not exist) — rollback: delete this file
+- [x] Smoke test: contact/deal/object lists + admin 200, no errors; Add field = 27 vehicle fields, standard ობიექტი unchanged, no დილი/კალკულაცია; model dropdown TOYOTA = 91; list rows all matching
 
 ## Status
-M0–M3.1, Phase 2 (M6–M10), M11 and M12 done on testmycrm, pending user browser check; deal searchable fields, M4, M5 — Not started
+Test: M0–M12 done. Prod (mycrm): vehicle fields (M11–M12) live since 2026-11-05, lookups off (D-11). Open: deal searchable fields, M4 automated tests, lookups on prod.
