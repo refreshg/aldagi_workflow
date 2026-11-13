@@ -1,4 +1,4 @@
-<!-- last-synced: 2026-10-15, commit: 301d031 -->
+<!-- last-synced: 2026-11-13, commit: 862a93f -->
 # Aldagi — Bitrix24 customizations
 
 ## Stack
@@ -29,7 +29,8 @@ curl -sk -b cj.txt -X POST "https://testmycrm.aldagi.ge/bitrix/admin/php_command
 
 ## Layout
 - `local/php_interface/init.php` — loads local modules before crm
-- `local/modules/aldagi.objectfilter/` — contact filter by linked object (SPA 130)
+- `local/modules/aldagi.objectfilter/` — contact and deal filters by linked object (SPA 130)
+- `local/js/aldagi/objectfilter/carmodel/` — page script: model list limited to the chosen make
 - `docs/` — PRD (Georgian), SPEC, PLAN, ARCHITECTURE, DECISIONS (English)
 
 ## Conventions

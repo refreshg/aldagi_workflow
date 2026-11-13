@@ -1,4 +1,4 @@
-<!-- last-synced: 2026-10-15, commit: 301d031 -->
+<!-- last-synced: 2026-11-13, commit: 862a93f -->
 # Decisions
 
 ### D-1: Replace the standard "ობიექტი" filter with a custom lookup
@@ -75,3 +75,9 @@
 - **Context:** Same code must run on testmycrm (all features) and mycrm (vehicle fields only), without touching anything else on prod.
 - **Decision:** module option `aldagi.objectfilter` / `lookups` — comma list of `object,deal,calculation` (default all). With `object` off the standard "ობიექტი" (`PARENT_ID_130`) field and its values are left to Bitrix. Prod: `lookups = ''`; test: option absent (= all).
 - **Consequences:** prod contact filter = 41 standard fields unchanged + 27 "ობიექტი: …" vehicle fields. To enable a lookup on prod later: `Option::set('aldagi.objectfilter', 'lookups', 'object')`.
+
+### D-12: Object fields in the deal filter (make, model, release year)
+- **Date:** 2026-11-13 — requested by the user; test first ("ვაკეთებთ ჯერ testmycrm ზე")
+- **Context:** Deals should be searchable by their object's make, model and year, the same way as contacts. Standard check: the deal filter has 54 fields, none from the object; objects are children of deals (`b_crm_entity_relation` 2→130, 34 370 deals).
+- **Decision:** `Aldagi\ObjectFilter\Filter\DealDataProvider` (extends the core one) for filter ids starting with `CRM_DEAL_LIST` (list `CRM_DEAL_LIST_V12`, kanban `CRM_DEAL_LIST_V12_C_<n>`); fields `ObjectFilterFields::DEAL_FIELDS` with the same formats as contacts (make list, model by make, year as number); objects → deals via the 2→130 relation → `@ID`. Model script also loaded on `/crm/deal/`.
+- **Consequences:** verified on test: TOYOTA 7405, TOYOTA+year>2015 3559, Camry 1585, year 2010–2012 1979 deals — all equal to SQL; deal list page rows verified; standard deal fields and contacts unchanged. Kanban uses the same hook (`Kanban\Entity::applySubQueryBasedFilters`), not yet checked in a browser. Not on prod yet.

@@ -1,4 +1,4 @@
-<!-- last-synced: 2026-10-15, commit: 301d031 -->
+<!-- last-synced: 2026-11-13, commit: 862a93f -->
 # Plan — contact search by linked object
 
 > M0–M3 were implemented on testmycrm before this plan existed (requested in chat, 2026-10-15). M4–M5 need approval.
@@ -17,7 +17,7 @@
 ## M2 — Lookup
 - [x] Local module `aldagi.objectfilter` — `install/index.php`, `install/version.php`, `.settings.php`
 - [x] Entity-selector provider `aldagi-object` — `lib/entityselector/objectprovider.php`
-- [x] Text search + permissions — `lib/objectsearch.php`
+- [x] Text search + permissions — `lib/objectsearch.php` (moved to `lib/search/` in M7)
 - [x] `PARENT_ID_130` → multiple `entity_selector`
 - [x] `init.php` → `Loader::includeModule('aldagi.objectfilter')`
 
@@ -64,6 +64,12 @@
 - [x] Server checks: Toyota 91 models, Toyota+BMW 180, search "camry" (BMW → 0), model filter = SQL
 - [ ] Browser check of the make → model drop-down (user)
 
+## M13 — Object fields in the deal filter (requested 2026-11-13, D-12)
+- [x] `lib/filter/dealdataprovider.php`, `FilterFactory`, `ObjectFilterFields::DEAL_FIELDS`, model script on `/crm/deal/`
+- [x] testmycrm: 4 scenarios = SQL; deal list page rows verified
+- [ ] Browser check: deal list + kanban, make → model drop-down (user)
+- [ ] Prod rollout (after user go-ahead)
+
 ## M4 — Verification and automated tests (needs approval)
 - [ ] Confirm test runner approach (SPEC open question 1)
 - [ ] Self-test script covering AC-1..6, AC-8 with fixed fixtures/expectations — `tests/objectfilter_selftest.php` (run through admin PHP console)
@@ -79,4 +85,4 @@
 - [x] Smoke test: contact/deal/object lists + admin 200, no errors; Add field = 27 vehicle fields, standard ობიექტი unchanged, no დილი/კალკულაცია; model dropdown TOYOTA = 91; list rows all matching
 
 ## Status
-Test: M0–M12 done. Prod (mycrm): vehicle fields (M11–M12) live since 2026-11-05, lookups off (D-11). Open: deal searchable fields, M4 automated tests, lookups on prod.
+Test: M0–M13 done (M13 uncommitted, awaiting user browser check). Prod (mycrm): vehicle fields (M11–M12) live since 2026-11-05, lookups off (D-11); M13 not on prod. Open: deal searchable fields (M6), M4 automated tests, lookups on prod, M13 prod rollout.
