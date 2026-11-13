@@ -55,12 +55,20 @@ class ObjectFilterFields
 		'UF_CRM_2_1757064871495', // აქვს ტაქსის ლიცენზია
 		'UF_CRM_2_1733753033361', // არასტანდარტული ნომერი
 	];
+	/** Object fields offered in the deal filter (D-12) */
+	public const DEAL_FIELDS = [
+		self::MAKE_FIELD,         // მარკა
+		self::MODEL_FIELD,        // მოდელი
+		'UF_CRM_2_1723804031377', // გამოშვების წელი
+	];
 
 	private DataProvider $ownerProvider;
 	private ObjectSearch $search;
 	private Crm\Filter\ItemDataProvider $itemProvider;
 	private Crm\Filter\ItemUfDataProvider $ufProvider;
 	private NumericListFields $numericLists;
+	/** @var string[] */
+	private array $fieldNames;
 	/** @var array<string, array{field: Field, isUserField: bool}>|null */
 	private ?array $sourceFields = null;
 
@@ -82,10 +90,14 @@ class ObjectFilterFields
 		return ParentFieldManager::getParentFieldName(ObjectSearch::ENTITY_TYPE_ID);
 	}
 
-	public function __construct(DataProvider $ownerProvider, ObjectSearch $search)
+	/**
+	 * @param string[]|null $fieldNames object fields to offer; the vehicle fields by default
+	 */
+	public function __construct(DataProvider $ownerProvider, ObjectSearch $search, ?array $fieldNames = null)
 	{
 		$this->ownerProvider = $ownerProvider;
 		$this->search = $search;
+		$this->fieldNames = $fieldNames ?? self::CAR_FIELDS;
 
 		// base factory on purpose: the overridden one only matters for contacts
 		$filterFactory = new Crm\Filter\Factory();
@@ -281,7 +293,7 @@ class ObjectFilterFields
 		$this->sourceFields = [];
 		$ufFields = $this->ufProvider->prepareFields();
 		$userFields = Crm\Service\Container::getInstance()->getFactory(ObjectSearch::ENTITY_TYPE_ID)->getUserFields();
-		foreach (self::CAR_FIELDS as $id)
+		foreach ($this->fieldNames as $id)
 		{
 			if (isset($ufFields[$id], $userFields[$id]))
 			{

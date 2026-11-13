@@ -18,6 +18,13 @@ class FilterFactory extends Crm\Filter\Factory
 		{
 			return new ContactDataProvider($settings);
 		}
+		if (
+			$settings instanceof Crm\Filter\DealSettings
+			&& DealDataProvider::isSupportedFilterId((string)$settings->getID())
+		)
+		{
+			return new DealDataProvider($settings);
+		}
 
 		return parent::getDataProvider($settings);
 	}

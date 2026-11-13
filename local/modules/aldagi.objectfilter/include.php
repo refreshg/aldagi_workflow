@@ -21,7 +21,7 @@ EventManager::getInstance()->addEventHandler('main', 'OnProlog', static function
 		return;
 	}
 	$page = (string)\Bitrix\Main\Context::getCurrent()->getRequest()->getRequestedPage();
-	if (str_starts_with($page, '/crm/contact/'))
+	if (str_starts_with($page, '/crm/contact/') || str_starts_with($page, '/crm/deal/'))
 	{
 		\Bitrix\Main\UI\Extension::load('aldagi.objectfilter.carmodel');
 	}
