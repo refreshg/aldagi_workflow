@@ -31,7 +31,7 @@ Contact list filter lookups "ობიექტი" (SPA 130), "დილი" (d
 - Deals: searched through the standard full-text index only (title, ID, client, stage...); deal UFs need `IS_SEARCHABLE=Y` + index rebuild; words <3 characters are ignored
 - Calculation fields whose label contains json/table/bug are not searched
 - Object list fields with numeric values (year, engine volume...) are filtered as numbers (more/less/range); detected automatically: ≥3 values, ≥90% numeric
-- Deal filter (`CRM_DEAL_LIST*`, list and kanban): object make, model, release year (`ObjectFilterFields::DEAL_FIELDS`); deals via the deal → object relation
+- Deal filter (`CRM_DEAL_LIST*`, list and kanban): object make, model, release year, vehicle value, currency (`ObjectFilterFields::DEAL_FIELDS`); deals via the deal → object relation
 - Contact filter: only the 27 vehicle fields of the object are offered (`ObjectFilterFields::CAR_FIELDS`); add a field code there to expose more
 - Model drop-down depends on the chosen make via `local/js/aldagi/objectfilter/carmodel/script.js` (deploy it together with the module); it patches the entity-selector dialog — re-check after `ui` updates
 

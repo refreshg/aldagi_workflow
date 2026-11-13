@@ -60,6 +60,8 @@ class ObjectFilterFields
 		self::MAKE_FIELD,         // მარკა
 		self::MODEL_FIELD,        // მოდელი
 		'UF_CRM_2_1723804031377', // გამოშვების წელი
+		'UF_CRM_2_1733743367634', // ავტომობილის ღირებულება
+		'UF_CRM_2_1725628662391', // ვალუტა
 	];
 
 	private DataProvider $ownerProvider;

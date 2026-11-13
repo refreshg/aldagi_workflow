@@ -68,7 +68,8 @@
 - [x] `lib/filter/dealdataprovider.php`, `FilterFactory`, `ObjectFilterFields::DEAL_FIELDS`, model script on `/crm/deal/`
 - [x] testmycrm: 4 scenarios = SQL; deal list page rows verified
 - [ ] Browser check: deal list + kanban, make → model drop-down (user)
-- [ ] Prod rollout (after user go-ahead)
+- [x] + ავტომობილის ღირებულება, ვალუტა in `DEAL_FIELDS` (5 fields); test 5/5 = SQL
+- [x] Prod rollout 2026-11-13 (user go-ahead): prod files verified unchanged, uploaded dealdataprovider → objectfilterfields → include → filterfactory; 5/5 = SQL; deal list/kanban/contacts/admin 200
 
 ## M4 — Verification and automated tests (needs approval)
 - [ ] Confirm test runner approach (SPEC open question 1)
@@ -85,4 +86,4 @@
 - [x] Smoke test: contact/deal/object lists + admin 200, no errors; Add field = 27 vehicle fields, standard ობიექტი unchanged, no დილი/კალკულაცია; model dropdown TOYOTA = 91; list rows all matching
 
 ## Status
-Test: M0–M13 done (M13 uncommitted, awaiting user browser check). Prod (mycrm): vehicle fields (M11–M12) live since 2026-11-05, lookups off (D-11); M13 not on prod. Open: deal searchable fields (M6), M4 automated tests, lookups on prod, M13 prod rollout.
+Test: M0–M13 done (M13 uncommitted, awaiting user browser check). Prod (mycrm): vehicle fields (M11–M12) live since 2026-11-05, lookups off (D-11); M13 (deal filter, 5 object fields) on prod since 2026-11-13. Open: deal searchable fields (M6), M4 automated tests, lookups on prod.
